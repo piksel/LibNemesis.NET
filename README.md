@@ -37,7 +37,7 @@ Whenever the connection to a client is closed, the server will attempt a new con
   // Handle incoming commands with an event listener
   server.CommandRecieved += Client_CommandRecieved;
   
-  // Send commands to the specific client
+  // Send commands to the client
   var response = await server.SendCommand("Command");
 ```
 
