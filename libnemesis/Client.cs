@@ -50,32 +50,7 @@ namespace Piksel.Nemesis
         {
             return await sendCommand(command, serverId);
         }
-        /*
-        public string async SendCommand(string command)
-        {
-           // if (serverConnections.ContainsKey(serverId))
 
-                var serverConnection = serverConnections[serverId];
-                NetworkStream stream = serverConnection.Client.GetStream();
-
-                var queuedCommand = new new QueuedCommand()
-                {
-                    CommandString = command,
-                    ResultSource = new TaskCompletionSource<string>,
-                    ServerId = serverId
-                };
-
-                commandQueue.Enqueue(queuedCommand);
-            /*
-            }
-            else
-            {
-                _log.Warn("No connection to server with ID {0}!", serverId);
-                return "";
-            }
-            
-        }
-    */
         private void HandleAsyncConnection(IAsyncResult result)
         {
             TcpListener listener = (TcpListener)result.AsyncState;
@@ -84,11 +59,11 @@ namespace Piksel.Nemesis
 
             var clientEndpoint = (IPEndPoint)client.Client.RemoteEndPoint;
 
-            _log.Info("Got connection from {0}:{0}", clientEndpoint.Address, clientEndpoint.Port);
+            _log.Info("Got connection from {0}:{1}", clientEndpoint.Address, clientEndpoint.Port);
 
             var stream = client.GetStream();
 
-            var idBytes = new byte[16];
+            var idBytes = new byte[16]; // GUID is 16 bytes
 
             stream.Read(idBytes, 0, 16);
 
