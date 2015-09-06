@@ -35,10 +35,10 @@ namespace Piksel.Nemesis
                 tcpListener = new TcpListener(endpoint);
                 tcpListener.Start();
 
-                while (true)
+                while (Thread.CurrentThread.ThreadState != ThreadState.AbortRequested)
                 {
                     IAsyncResult result = tcpListener.BeginAcceptTcpClient(HandleAsyncConnection, tcpListener);
-                    connectionWaitHandle.WaitOne(); // Wait until a client has begun handling an event
+                    connectionWaitHandle.WaitOne(TimeSpan.FromSeconds(3));  // Wait until a client has begun handling an event
                     connectionWaitHandle.Reset(); // Reset wait handle or the loop goes as fast as it can (after first request)
                 }
             }));
@@ -128,6 +128,23 @@ namespace Piksel.Nemesis
                 CommandQueue = new ConcurrentQueue<QueuedCommand>()
             });
             return serverConnection.CommandQueue;
+        }
+
+        public void Close()
+        {
+            foreach (var scVlk in serverConnections)
+            {
+                var serverConnection = scVlk.Value;
+                if (serverConnection.Client != null) serverConnection.Client.Close();
+                if (serverConnection.Thread != null) serverConnection.Thread.Abort();
+            }
+            if (listenerThread != null)
+                listenerThread.Abort();
+        }
+
+        ~Client()
+        {
+            Close();
         }
     }
 

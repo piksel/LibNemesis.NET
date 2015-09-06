@@ -107,7 +107,6 @@ namespace Piksel.Nemesis
 
         protected abstract ConcurrentQueue<QueuedCommand> getCommandQueue(Guid serverId);
 
-
     }
 
     public struct ServerConnection

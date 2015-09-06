@@ -59,10 +59,16 @@ namespace NemesisTest
 
             _log.Info("Got response: {0}", response3.Result);
 
+            _log.Info("Waiting for transactions to complete...");
+            Thread.Sleep(2000);
 
+            Console.Write("\nPress any key to destroy instances...");
+            Console.Read();
 
-
-            Console.ReadLine();
+            _log.Info("Waiting for threads to exit...");
+            serverB.Close();
+            serverA.Close();
+            client.Close();
         }
 
         private static void Client_CommandRecieved(object sender, Nemesis.CommandRecievedEventArgs e)

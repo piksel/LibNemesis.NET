@@ -34,7 +34,7 @@ namespace Piksel.Nemesis
             {
                 bool aborted = false;
 
-                while (!aborted)
+                while (Thread.CurrentThread.ThreadState != ThreadState.Aborted && Thread.CurrentThread.ThreadState != ThreadState.AbortRequested)
                 {
 
                     _log.Info("Connecting to client...");
@@ -100,6 +100,15 @@ namespace Piksel.Nemesis
             serverThread.Start();
         }
 
+        public void Close()
+        {
+            serverThread.Abort();
+        }
+
+        ~Server()
+        {
+            Close();
+        }
 
 
         public async Task<string> SendCommand(string command)
