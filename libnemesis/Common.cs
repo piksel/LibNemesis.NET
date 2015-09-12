@@ -1,4 +1,5 @@
 ﻿using NLog;
+using Piksel.Nemesis.Security;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -35,40 +36,103 @@ namespace Piksel.Nemesis
 
         public event CommandRecievedEventHandler CommandRecieved;
 
+
+        protected abstract byte[] encryptKey(byte[] key, Guid remoteId);
+
+        protected EncryptedMessage encryptMessage(QueuedCommand qc)
+        {
+            return encryptMessage(qc.CommandString, qc.ServerId);
+        }
+
+        protected EncryptedMessage encryptMessage(string message, Guid remoteId)
+        {
+            // encrypt message with Rijndael
+            var em = Rijndael.Encrypt(Encoding.UTF8.GetBytes(message));
+
+            // encrypt key with RSA
+            em.Key = encryptKey(em.Key, remoteId);
+
+            return em;
+        }
+
+
+        protected string decryptMessage(EncryptedMessage em)
+        {
+            em.Key = RSA.DecryptData(em.Key, KeyStore.PrivateKey.Key);
+
+            var bytes = Rijndael.Decrypt(em);
+
+            return Encoding.UTF8.GetString(bytes);
+        }
+
         protected void handleRemoteCommand(NetworkStream stream, QueuedCommand serverCommand)
         {
-            using (var sw = new StreamWriter(stream, encoding: new UTF8Encoding(false, false), bufferSize: 32, leaveOpen: true))
+            if (EncryptionEnabled)
             {
-                sw.Write(serverCommand.CommandString);
+                var em = encryptMessage(serverCommand);
+                em.WriteToStream(stream);
             }
-            stream.WriteByte(0);
-            string response;
-            using (var sr = new StreamReader(stream))
+            else
             {
-                response = sr.ReadToEnd();
+                using (var sw = new StreamWriter(stream, encoding: new UTF8Encoding(false, false), bufferSize: 32, leaveOpen: true))
+                {
+                    sw.Write(serverCommand.CommandString);
+                }
+                stream.WriteByte(0);
+            }
+
+            string response;
+
+            if (EncryptionEnabled)
+            {
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    stream.CopyTo(ms);
+                    ms.Position = 0;
+                    var em = EncryptedMessage.FromStream(ms);
+                    response = decryptMessage(em);
+                }
+            }
+            else
+            {
+                using (var sr = new StreamReader(stream))
+                {
+                    response = sr.ReadToEnd();
+                }
             }
             serverCommand.ResultSource.SetResult(response);
         }
 
-        protected async void handleLocalCommand(NetworkStream stream)
+        protected async void handleLocalCommand(NetworkStream stream, Guid remoteId)
         {
 
             string command;
-            var cmdBuf = new byte[2048];
-            int cp = 0;
-            for (; cp < cmdBuf.Length; ++cp)
+            byte[] cmdBuf;
+
+            if (EncryptionEnabled)
             {
-                var ib = stream.ReadByte();
-                if (ib > 0)
-                {
-                    cmdBuf[cp] = (byte)ib;
-                }
-                else
-                {
-                    break;
-                }
+                var em = EncryptedMessage.FromStream(stream);
+                command = decryptMessage(em);
             }
-            command = Encoding.UTF8.GetString(cmdBuf, 0, cp);
+            else
+            {
+                cmdBuf = new byte[2048];
+                int cp = 0;
+                for (; cp < cmdBuf.Length; ++cp)
+                {
+                    var ib = stream.ReadByte();
+                    if (ib > 0)
+                    {
+                        cmdBuf[cp] = (byte)ib;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                command = Encoding.UTF8.GetString(cmdBuf, 0, cmdBuf.Length);
+            }
 
             _log.Info("Got command: \"{0}\"", command);
 
@@ -82,9 +146,17 @@ namespace Piksel.Nemesis
 
             var response = await crea.ResultSource.Task;
 
-            using (var sw = new StreamWriter(stream))
+            if (EncryptionEnabled)
             {
-                sw.Write("OK");
+                var em = encryptMessage(response, remoteId);
+                em.WriteToStream(stream);
+            }
+            else
+            {
+                using (var sw = new StreamWriter(stream))
+                {
+                    sw.Write(response);
+                }
             }
             stream.Close();
         }
@@ -106,6 +178,15 @@ namespace Piksel.Nemesis
         }
 
         protected abstract ConcurrentQueue<QueuedCommand> getCommandQueue(Guid serverId);
+
+        public IKeyStore KeyStore { get; set; }
+        public bool EncryptionEnabled { get { return KeyStore != null; } }
+
+        public void EnableEncryption(MemoryKeyStore keyStore)
+        {
+            KeyStore = keyStore;
+            KeyStore.Load();
+        }
 
     }
 

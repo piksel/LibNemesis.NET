@@ -5,8 +5,10 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 using Nemesis = Piksel.Nemesis;
+using Piksel.Nemesis.Security;
 
 namespace NemesisTest
 {
@@ -21,9 +23,20 @@ namespace NemesisTest
             Console.Title = "Nemesis Test";
             _log.Info("Nemesis test started.");
 
+            _log.Info("Testing packing...");
+            UInt16 start = 36282;
+            _log.Info(String.Format("Start: {0}, 0x{0:x4}", start));
+            byte[] packed = Nemesis.StreamUtils.PackUint16(start);
+            _log.Info(String.Format("Packed: 0 => {0:x2}, 1 => {1:x2}", packed[0], packed[1]));
+            UInt16 end = Nemesis.StreamUtils.UnpackUint16(packed);
+            _log.Info(String.Format("End: {0}, 0x{0:x4}", end));
+
             _log.Info("Creating client...");
             var client = new Nemesis.Client(new IPEndPoint(IPAddress.Loopback, PORT));
+            client.EnableEncryption(new MemoryKeyStore());
             client.CommandRecieved += Client_CommandRecieved;
+
+            var clientKey = client.KeyStore.PublicKey;
 
             _log.Info("Generating GUIDs for server A and B...");
             var serverGuidA = Guid.NewGuid();
@@ -35,7 +48,12 @@ namespace NemesisTest
 
             _log.Info("Creating server A...");
             var serverA = new Nemesis.Server(serverGuidA, PORT, "localhost");
+            serverA.EnableEncryption(new MemoryKeyStore());
             serverA.CommandRecieved += ServerA_CommandRecieved;
+            serverA.ClientPublicKey = clientKey;
+
+            var serverKeyA = serverA.KeyStore.PublicKey;
+            client.ServerPublicKeys.Add(serverGuidA, serverKeyA);
 
             _log.Info("Waiting for connections to establish...");
             Thread.Sleep(2000);
@@ -55,7 +73,18 @@ namespace NemesisTest
 
             _log.Info("Creating server B...");
             var serverB = new Nemesis.Server(serverGuidB, PORT, "localhost");
+            serverB.EnableEncryption(new MemoryKeyStore());
             serverB.CommandRecieved += ServerB_CommandRecieved;
+
+            _log.Info("Letting the client try to send a message to the initialized server with no public key...");
+            Thread.Sleep(2000);
+
+
+            serverB.ClientPublicKey = clientKey;
+
+            _log.Info("Setting the public key for Server B...");
+            var serverKeyB = serverB.KeyStore.PublicKey;
+            client.ServerPublicKeys.Add(serverGuidB, serverKeyB);
 
             _log.Info("Got response: {0}", response3.Result);
 

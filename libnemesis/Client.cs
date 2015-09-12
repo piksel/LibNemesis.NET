@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Piksel.Nemesis.Security;
 
 namespace Piksel.Nemesis
 {
@@ -93,21 +94,31 @@ namespace Piksel.Nemesis
                     var commandQueue = serverConnection.CommandQueue;
                     if (commandQueue.Count > 0) // Sending mode
                     {
-                        _log.Info("Processing command from queue...");
-                        QueuedCommand serverCommand;
-                        if (commandQueue.TryDequeue(out serverCommand))
+                        if (!ServerPublicKeys.ContainsKey(serverId))
                         {
-                            handleRemoteCommand(stream, serverCommand);
+                            _log.Info(String.Format("Cannot process queue. No public key for server {0}.", serverId));
+                            Thread.Sleep(1000);
                         }
                         else
                         {
-                            _log.Info("Could not dequeue command!");
+
+                            _log.Info("Processing command from queue...");
+                            QueuedCommand serverCommand;
+
+                            if (commandQueue.TryDequeue(out serverCommand))
+                            {
+                                handleRemoteCommand(stream, serverCommand);
+                            }
+                            else
+                            {
+                                _log.Info("Could not dequeue command!");
+                            }
                         }
                     }
                     else if (stream.DataAvailable) // Recieving mode
                     {
                         _log.Info("Waiting for command...");
-                        handleLocalCommand(stream);
+                        handleLocalCommand(stream, serverId);
                     }
                     else
                     {
@@ -145,6 +156,17 @@ namespace Piksel.Nemesis
         ~Client()
         {
             Close();
+        }
+
+        public Dictionary<Guid, RSAKey> ServerPublicKeys = new Dictionary<Guid, RSAKey>();
+
+        protected override byte[] encryptKey(byte[] key, Guid remoteId)
+        {
+            if (!ServerPublicKeys.ContainsKey(remoteId))
+                throw new Exception(String.Format("No RSA public key for server \"{0}\" found!", remoteId.ToString()));
+
+            return RSA.EncryptData(key, ServerPublicKeys[remoteId].Key);
+
         }
     }
 

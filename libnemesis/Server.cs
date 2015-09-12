@@ -1,4 +1,5 @@
 ﻿using NLog;
+using Piksel.Nemesis.Security;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -80,7 +81,7 @@ namespace Piksel.Nemesis
                             else if (stream.DataAvailable) // Recieving mode
                             {
                                 _log.Info("Waiting for command...");
-                                handleLocalCommand(stream);
+                                handleLocalCommand(stream, Guid.Empty);
                             }
                             else
                             {
@@ -120,5 +121,13 @@ namespace Piksel.Nemesis
         {
             return commandQueue;
         }
+
+        protected override byte[] encryptKey(byte[] key, Guid remoteId)
+        {
+            return RSA.EncryptData(key, ClientPublicKey.Key);
+
+        }
+
+        public RSAKey ClientPublicKey { get; set; }
     }
 }
