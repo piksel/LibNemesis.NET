@@ -23,14 +23,6 @@ namespace NemesisTest
             Console.Title = "Nemesis Test";
             _log.Info("Nemesis test started.");
 
-            _log.Info("Testing packing...");
-            UInt16 start = 36282;
-            _log.Info(String.Format("Start: {0}, 0x{0:x4}", start));
-            byte[] packed = Nemesis.StreamUtils.PackUint16(start);
-            _log.Info(String.Format("Packed: 0 => {0:x2}, 1 => {1:x2}", packed[0], packed[1]));
-            UInt16 end = Nemesis.StreamUtils.UnpackUint16(packed);
-            _log.Info(String.Format("End: {0}, 0x{0:x4}", end));
-
             _log.Info("Creating client...");
             var client = new Nemesis.Client(new IPEndPoint(IPAddress.Loopback, PORT));
             client.EnableEncryption(new MemoryKeyStore());
