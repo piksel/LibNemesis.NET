@@ -182,7 +182,7 @@ namespace Piksel.Nemesis
         public IKeyStore KeyStore { get; set; }
         public bool EncryptionEnabled { get { return KeyStore != null; } }
 
-        public void EnableEncryption(MemoryKeyStore keyStore)
+        public void EnableEncryption(IKeyStore keyStore)
         {
             KeyStore = keyStore;
             KeyStore.Load();

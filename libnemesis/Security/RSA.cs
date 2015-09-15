@@ -23,17 +23,48 @@ namespace Piksel.Nemesis.Security
             }
         }
 
+        public static string ExportToXml(byte[] key, bool includePrivate = true, int keySize = 1024)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.ImportCspBlob(key);
+                return rsa.ToXmlString(includePrivate);
+            }
+        }
+
+        public static void ImportFromXml(IKeyStore keyStore, string xml, int keySize = 1024)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.FromXmlString(xml);
+                keyStore.PublicKey.Key = rsa.ExportCspBlob(false);
+                keyStore.PrivateKey.Key = rsa.ExportCspBlob(true);
+            }
+        }
+
+        public static byte[] GetPublicKey(byte[] privateKey, int keySize = 1024)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.ImportCspBlob(privateKey);
+                return rsa.ExportCspBlob(false);
+            }
+        }
+
         // plain -> public key -> encrypted bytes
         public static byte[] EncryptData(string data, byte[] key)
         {
             return EncryptData(Encoding.UTF8.GetBytes(data), key);
         }
 
-        public static byte[] EncryptData(byte[] data, byte[] key)
+        public static byte[] EncryptData(byte[] data, byte[] key, int keySize = 1024)
         {
             byte[] cipherbytes;
 
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(1024))
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
                 rsa.PersistKeyInCsp = false;
                 rsa.ImportCspBlob(key);
@@ -44,9 +75,9 @@ namespace Piksel.Nemesis.Security
         }
 
         // encrypted bytes -> private key -> plain
-        public static byte[] DecryptData(byte[] data, byte[] key)
+        public static byte[] DecryptData(byte[] data, byte[] key, int keySize = 1024)
         {
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(1024))
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
                 rsa.PersistKeyInCsp = false;
 
