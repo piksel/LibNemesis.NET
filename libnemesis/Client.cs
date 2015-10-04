@@ -108,6 +108,7 @@ namespace Piksel.Nemesis
                             if (commandQueue.TryDequeue(out serverCommand))
                             {
                                 handleRemoteCommand(stream, serverCommand);
+                                stream.Close();
                             }
                             else
                             {
@@ -119,6 +120,7 @@ namespace Piksel.Nemesis
                     {
                         _log.Info("Waiting for command...");
                         handleLocalCommand(stream, serverId);
+                        stream.Close();
                     }
                     else
                     {

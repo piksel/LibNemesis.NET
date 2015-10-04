@@ -102,6 +102,7 @@ namespace Piksel.Nemesis
                 }
             }
             serverCommand.ResultSource.SetResult(response);
+            stream.Close();
         }
 
         protected async void handleLocalCommand(NetworkStream stream, Guid remoteId)

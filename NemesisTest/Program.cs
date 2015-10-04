@@ -51,12 +51,20 @@ namespace NemesisTest
             Thread.Sleep(2000);
 
             var cmdTest = "test";
-            _log.Info("Sending command \"{0}\" to server A ({1})", cmdTest, serverGuidA);
+            _log.Info("Sending command \"{0}\" (1/2) to server A ({1})", cmdTest, serverGuidA);
             var response = client.SendCommand(cmdTest, serverGuidA);
             _log.Info("Got response: {0}", response.Result);
 
-            _log.Info("Sending command \"{0}\" from server A to client", cmdTest);
+            _log.Info("Sending command \"{0}\" (2/2) to server A ({1})", cmdTest, serverGuidA);
+            response = client.SendCommand(cmdTest, serverGuidA);
+            _log.Info("Got response: {0}", response.Result);
+
+            _log.Info("Sending command \"{0}\" (1/2) from server A to client", cmdTest);
             var response2 = serverA.SendCommand(cmdTest);
+            _log.Info("Got response: {0}", response2.Result);
+
+            _log.Info("Sending command \"{0}\" (2/2) from server A to client", cmdTest);
+            response2 = serverA.SendCommand(cmdTest);
             _log.Info("Got response: {0}", response2.Result);
 
 
