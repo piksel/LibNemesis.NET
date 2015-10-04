@@ -44,6 +44,17 @@ namespace Piksel.Nemesis.Security
             }
         }
 
+        public static void ImportFromBytes(IKeyStore keyStore, byte[] bytes, int keySize = 1024)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
+            {
+                rsa.PersistKeyInCsp = false;
+                rsa.ImportCspBlob(bytes);
+                keyStore.PublicKey.Key = rsa.ExportCspBlob(false);
+                keyStore.PrivateKey.Key = bytes;
+            }
+        }
+
         public static byte[] GetPublicKey(byte[] privateKey, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))

@@ -40,9 +40,19 @@ namespace Piksel.Nemesis.Security
             RSA.CreateNewKeyPair(this);
         }
 
+        public void Load(byte[] cspBytes)
+        {
+            RSA.ImportFromBytes(this, cspBytes);
+        }
+
         public void Save()
         {
             // Nothing to do here
+        }
+
+        public void Save(out byte[] bytes, bool onlyPublic = false)
+        {
+            bytes = onlyPublic ? PublicKey.Key : PrivateKey.Key;
         }
 
         public bool Available
