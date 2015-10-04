@@ -140,6 +140,7 @@ namespace Piksel.Nemesis
             var crea = new CommandRecievedEventArgs()
             {
                 Command = command,
+                ServerId = remoteId,
                 ResultSource = new TaskCompletionSource<string>()
             };
 

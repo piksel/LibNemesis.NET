@@ -102,7 +102,7 @@ namespace NemesisTest
 
         private static void Client_CommandRecieved(object sender, Nemesis.CommandRecievedEventArgs e)
         {
-            e.ResultSource.SetResult("Client Result");
+            e.ResultSource.SetResult(String.Format("Client Result from {0}", e.ServerId));
         }
 
         private static void ServerA_CommandRecieved(object sender, Nemesis.CommandRecievedEventArgs e)
