@@ -22,6 +22,7 @@ namespace Piksel.Nemesis.Security
 
                 em.IV = aes.IV;
                 em.Key = aes.Key;
+                em.EncryptionType = MessageEncryptionType.Aes;
 
                 using (var encryptor = aes.CreateEncryptor())
                 {

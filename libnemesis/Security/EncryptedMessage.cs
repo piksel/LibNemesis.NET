@@ -75,8 +75,13 @@ namespace Piksel.Nemesis.Security
 
     public enum MessageEncryptionType : byte
     {
-        Unknown = 0,
-        Aes = 1,
-        AesRsa = 2
+        Unknown = 0xFF,
+            Aes = 0x01
+    }
+
+    public enum KeyEncryptionType : byte
+    {
+        Unknown = 0xFF,
+            Rsa = 0x01
     }
 }
