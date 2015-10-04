@@ -17,12 +17,14 @@ namespace Piksel.Nemesis
         int port;
         string host;
 
+        public TimeSpan RetryDelay = TimeSpan.FromSeconds(10);
+
         private Thread serverThread;
         NetworkStream stream;
 
         ConcurrentQueue<QueuedCommand> commandQueue = new ConcurrentQueue<QueuedCommand>();
 
-        public Server(Guid id, int port, string host)
+        public Server(Guid id, int port, string host, bool connectOnStart = true)
         {
             _log = LogManager.GetLogger("NemesisServer");
 
@@ -37,9 +39,18 @@ namespace Piksel.Nemesis
 
                 while (Thread.CurrentThread.ThreadState != ThreadState.Aborted && Thread.CurrentThread.ThreadState != ThreadState.AbortRequested)
                 {
-
+                    TcpClient client;
                     _log.Info("Connecting to client...");
-                    TcpClient client = new TcpClient(host, port);
+                    try {
+                        client = new TcpClient(host, port);
+                    }
+                    catch (Exception x)
+                    {
+                        _log.Warn("Could not connect to the client: {0}", x.Message);
+                        _log.Info("Waiting {0} seconds before trying again...", RetryDelay.TotalSeconds);
+                        Thread.Sleep(RetryDelay);
+                        continue;
+                    }
 
                     stream = client.GetStream();
 
@@ -98,6 +109,13 @@ namespace Piksel.Nemesis
                     Thread.Sleep(TimeSpan.FromSeconds(sleepSeconds));
                 }
             }));
+            if(connectOnStart)
+                serverThread.Start();
+        }
+
+        public void Connect()
+        {
+            if (serverThread.IsAlive) return;
             serverThread.Start();
         }
 

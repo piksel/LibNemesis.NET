@@ -23,26 +23,29 @@ namespace NemesisTest
             Console.Title = "Nemesis Test";
             _log.Info("Nemesis test started.");
 
-            _log.Info("Creating client...");
-            var client = new Nemesis.Client(new IPEndPoint(IPAddress.Loopback, PORT));
-            client.EnableEncryption(new MemoryKeyStore());
-            client.CommandRecieved += Client_CommandRecieved;
-
-            var clientKey = client.KeyStore.PublicKey;
-
             _log.Info("Generating GUIDs for server A and B...");
             var serverGuidA = Guid.NewGuid();
             _log.Info("Using GUID for server A: {0}", serverGuidA.ToString());
             var serverGuidB = Guid.NewGuid();
             _log.Info("Using GUID for server B: {0}", serverGuidB.ToString());
 
-      
+            _log.Info("Creating keystore for Client...");
+            var clientKeystore = new MemoryKeyStore();
+            var clientKey = clientKeystore.PublicKey;
 
             _log.Info("Creating server A...");
             var serverA = new Nemesis.Server(serverGuidA, PORT, "localhost");
             serverA.EnableEncryption(new MemoryKeyStore());
             serverA.CommandRecieved += ServerA_CommandRecieved;
             serverA.ClientPublicKey = clientKey;
+
+            _log.Info("Waiting for server A to fail the connection...");
+            Thread.Sleep(4000);
+
+            _log.Info("Creating client...");
+            var client = new Nemesis.Client(new IPEndPoint(IPAddress.Loopback, PORT));
+            client.EnableEncryption(clientKeystore);
+            client.CommandRecieved += Client_CommandRecieved;
 
             var serverKeyA = serverA.KeyStore.PublicKey;
             client.ServerPublicKeys.Add(serverGuidA, serverKeyA);
