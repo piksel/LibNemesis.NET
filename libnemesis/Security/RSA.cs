@@ -40,7 +40,8 @@ namespace Piksel.Nemesis.Security
                 rsa.PersistKeyInCsp = false;
                 rsa.FromXmlString(xml);
                 keyStore.PublicKey.Key = rsa.ExportCspBlob(false);
-                keyStore.PrivateKey.Key = rsa.ExportCspBlob(true);
+                if(!rsa.PublicOnly)
+                    keyStore.PrivateKey.Key = rsa.ExportCspBlob(true);
             }
         }
 
@@ -51,7 +52,8 @@ namespace Piksel.Nemesis.Security
                 rsa.PersistKeyInCsp = false;
                 rsa.ImportCspBlob(bytes);
                 keyStore.PublicKey.Key = rsa.ExportCspBlob(false);
-                keyStore.PrivateKey.Key = bytes;
+                if (!rsa.PublicOnly)
+                    keyStore.PrivateKey.Key = bytes;
             }
         }
 
@@ -91,8 +93,6 @@ namespace Piksel.Nemesis.Security
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
                 rsa.PersistKeyInCsp = false;
-
-                //byte[] encodedCipherText = Convert.FromBase64String(data);
                 rsa.ImportCspBlob(key);
                 return rsa.Decrypt(data, false);
             }
