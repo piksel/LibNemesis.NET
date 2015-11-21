@@ -23,6 +23,15 @@ namespace Piksel.Nemesis.Security
             }
         }
 
+        public static byte[] CreateNewKeyPair(int keySize = 1024)
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
+            {
+                rsa.PersistKeyInCsp = false;
+                return  rsa.ExportCspBlob(true);
+            }
+        }
+
         public static string ExportToXml(byte[] key, bool includePrivate = true, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
@@ -47,14 +56,18 @@ namespace Piksel.Nemesis.Security
 
         public static void ImportFromBytes(IKeyStore keyStore, byte[] bytes, int keySize = 1024)
         {
+            
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
+                
                 rsa.PersistKeyInCsp = false;
                 rsa.ImportCspBlob(bytes);
                 keyStore.PublicKey.Key = rsa.ExportCspBlob(false);
                 if (!rsa.PublicOnly)
+                
                     keyStore.PrivateKey.Key = bytes;
             }
+
         }
 
         public static byte[] GetPublicKey(byte[] privateKey, int keySize = 1024)

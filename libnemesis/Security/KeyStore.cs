@@ -20,7 +20,16 @@ namespace Piksel.Nemesis.Security
 
     public class RSAKey
     {
-        public byte[] Key { get; set; }
+        public byte[] Key;// { get; set; }
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach(byte b in Key)
+            {
+                sb.Append(b.ToString("x"));
+            }
+            return sb.ToString();
+        }
     }
 
     public class MemoryKeyStore : IKeyStore
@@ -28,6 +37,8 @@ namespace Piksel.Nemesis.Security
         public RSAKey PrivateKey { get; set; }
         public RSAKey PublicKey { get; set; }
         public int KeySize { get; set; }
+
+        public bool Initialized { get { return PublicKey.Key != null && PublicKey.Key.Length > 0; } }
 
         public MemoryKeyStore()
         {
@@ -37,7 +48,8 @@ namespace Piksel.Nemesis.Security
 
         public void Load()
         {
-            RSA.CreateNewKeyPair(this);
+            if(!Initialized)
+                RSA.CreateNewKeyPair(this);
         }
 
         public void Load(byte[] cspBytes)

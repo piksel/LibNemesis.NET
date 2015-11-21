@@ -16,14 +16,14 @@ namespace Piksel.Nemesis
     {
         public string CommandString { get; set; }
         public TaskCompletionSource<string> ResultSource { get; set; }
-        public Guid ServerId { get; set; }
+        public Guid NodeId { get; set; }
     }
 
     public class CommandRecievedEventArgs: EventArgs
     {
         public string Command;
         public TaskCompletionSource<string> ResultSource { get; set; }
-        public Guid ServerId { get; set; }
+        public Guid NodeId { get; set; }
     }
 
     public delegate void CommandRecievedEventHandler(object sender, CommandRecievedEventArgs e);
@@ -34,6 +34,11 @@ namespace Piksel.Nemesis
             get; set;
         }
 
+        public void SetLogName(string name)
+        {
+            _log = LogManager.GetLogger(name);
+        }
+
         public event CommandRecievedEventHandler CommandRecieved;
 
 
@@ -41,7 +46,7 @@ namespace Piksel.Nemesis
 
         protected EncryptedMessage encryptMessage(QueuedCommand qc)
         {
-            return encryptMessage(qc.CommandString, qc.ServerId);
+            return encryptMessage(qc.CommandString, qc.NodeId);
         }
 
         protected EncryptedMessage encryptMessage(string message, Guid remoteId)
@@ -105,7 +110,7 @@ namespace Piksel.Nemesis
             stream.Close();
         }
 
-        protected async void handleLocalCommand(NetworkStream stream, Guid remoteId)
+        protected async Task handleLocalCommand(NetworkStream stream, Guid remoteId)
         {
 
             string command;
@@ -140,7 +145,7 @@ namespace Piksel.Nemesis
             var crea = new CommandRecievedEventArgs()
             {
                 Command = command,
-                ServerId = remoteId,
+                NodeId = remoteId,
                 ResultSource = new TaskCompletionSource<string>()
             };
 
@@ -150,8 +155,15 @@ namespace Piksel.Nemesis
 
             if (EncryptionEnabled)
             {
-                var em = encryptMessage(response, remoteId);
-                em.WriteToStream(stream);
+                try {
+                    var em = encryptMessage(response, remoteId);
+                    em.WriteToStream(stream);
+                }
+                catch (Exception x)
+                {
+                    _log.Warn($"Could not send response: {x.Message}");
+                    throw x;
+                }
             }
             else
             {
@@ -171,7 +183,7 @@ namespace Piksel.Nemesis
             {
                 CommandString = command,
                 ResultSource = new TaskCompletionSource<string>(),
-                ServerId = serverId
+                NodeId = serverId
             };
 
             commandQueue.Enqueue(queuedCommand);
@@ -192,11 +204,37 @@ namespace Piksel.Nemesis
 
     }
 
-    public struct ServerConnection
+    public struct NodeConnection
     {
         public Thread Thread { get; set; }
         public TcpClient Client { get; set; }
         public ConcurrentQueue<QueuedCommand> CommandQueue { get; set; }
+    }
+
+    public enum HandshakeResult: byte
+    {
+        // Accepted results:
+        ACCEPTED = 0x00,
+
+        UNKNOWN_GUID_ACCEPTED = 0x02,
+
+
+
+        // Non-accepted results:
+        MIN_ERROR = 0x30, // Do not use! Only for success comparission
+
+        BAD_GUID = 0x41, // GUID is not in a valid format
+        BLOCKED_GUID = 0x42, // GUID is blacklisted
+        UNKNOWN_GUID_NOT_ALLOWED = 0x4a, // Client does not have the public key
+
+
+        POOL_FULL = 0x51, // Client cannot accept more connections
+
+        // Node-side results:
+        NODE_UNKNOWN = 0xa0,
+        NODE_ERROR_READ = 0xa1,
+        NODE_ERROR_CLOSED = 0xa2,
+
     }
 
 }

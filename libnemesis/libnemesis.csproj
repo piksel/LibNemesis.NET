@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
-    <AssemblyVersion>1.3.15290.123</AssemblyVersion>
+    <AssemblyVersion>3.0.15325.170</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,14 +46,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client.cs" />
+    <Compile Include="Hub.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Security\EncryptedMessage.cs" />
     <Compile Include="Security\KeyStore.cs" />
     <Compile Include="Security\Rijndael.cs" />
     <Compile Include="Security\RSA.cs" />
-    <Compile Include="Server.cs" />
+    <Compile Include="Node.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
