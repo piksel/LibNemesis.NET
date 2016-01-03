@@ -162,7 +162,7 @@ namespace Piksel.Nemesis
                         else
                         {
 
-                            _log.Info("Processing command from queue...");
+                            _log.Debug("Processing command from queue...");
                             QueuedCommand serverCommand;
 
                             if (commandQueue.TryDequeue(out serverCommand))
@@ -173,14 +173,15 @@ namespace Piksel.Nemesis
                                 }
                                 catch (Exception x)
                                 {
-                                    _log.Warn($"Communication error with node. Requeueing command. Details: {x.Message}");
+                                    var ix = x.InnerException;
+                                    _log.Warn($"Communication error with node. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                                     commandQueue.Enqueue(serverCommand);
                                 }
                                 stream.Close();
                             }
                             else
                             {
-                                _log.Info("Could not dequeue command!");
+                                _log.Warn("Could not dequeue command!");
                             }
                         }
                     }
@@ -206,7 +207,7 @@ namespace Piksel.Nemesis
                 {
                     if (stream.DataAvailable) // Recieving mode
                     {
-                        _log.Info("Waiting for command...");
+                        _log.Debug("Waiting for command...");
                         try
                         {
                             var task = handleLocalCommand(stream, nodeId);
@@ -218,7 +219,9 @@ namespace Piksel.Nemesis
                         }
                         catch (Exception x)
                         {
-                            _log.Warn($"Communication error with client. Details: {x.Message}");
+                            // Todo: Throw a more user-friendly exception upon crypto errors -NM 2016-01-03
+                            var ix = x.InnerException;
+                            _log.Warn($"Communication error with node. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                         }
                         stream.Close();
                     }

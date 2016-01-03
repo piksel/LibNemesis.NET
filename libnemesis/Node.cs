@@ -152,7 +152,8 @@ namespace Piksel.Nemesis
                                 }
                                 catch (Exception x)
                                 {
-                                    _log.Warn($"Communication error with hub. Requeueing command. Details: {x.Message}");
+                                    var ix = x.InnerException;
+                                    _log.Warn($"Communication error with hub. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                                     commandQueue.Enqueue(serverCommand);
                                 }
                             }
@@ -225,7 +226,8 @@ namespace Piksel.Nemesis
                             }
                             catch (Exception x)
                             {
-                                _log.Warn($"Communication error with hub. Details: {x.Message}");
+                                var ix = x.InnerException;
+                                _log.Warn($"Communication error with hub. Details: {x.Message}{(ix!=null?"; "+ix.Message:"")}");
                             }
                         }
                         

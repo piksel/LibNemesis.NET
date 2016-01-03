@@ -141,7 +141,7 @@ namespace Piksel.Nemesis
                 command = Encoding.UTF8.GetString(cmdBuf, 0, cmdBuf.Length);
             }
 
-            _log.Info("Got command: \"{0}\"", command);
+            _log.Debug($"Got command \"{command.Truncate(10)}\".");
 
             var crea = new CommandRecievedEventArgs()
             {
