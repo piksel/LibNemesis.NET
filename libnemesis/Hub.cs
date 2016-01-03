@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Piksel.Nemesis.Security;
+using Piksel.Nemesis.Utilities;
 
 namespace Piksel.Nemesis
 {
@@ -105,7 +106,7 @@ namespace Piksel.Nemesis
             if (!knownGuid && !AllowUnknownGuid)
             {
                 _log.Warn("Node GUID not recognized, closing connection.");
-                stream.WriteByte((byte)HandshakeResult.UNKNOWN_GUID_NOT_ALLOWED);
+                stream.WriteSbyte((sbyte)HandshakeResult.UNKNOWN_GUID_NOT_ALLOWED);
                 stream.Close();
                 return false;
             }
@@ -113,11 +114,11 @@ namespace Piksel.Nemesis
             {
                 if (knownGuid)
                 {
-                    stream.WriteByte((byte)HandshakeResult.ACCEPTED);
+                    stream.WriteSbyte((sbyte)HandshakeResult.ACCEPTED);
                 }
                 else
                 {
-                    stream.WriteByte((byte)HandshakeResult.UNKNOWN_GUID_ACCEPTED);
+                    stream.WriteSbyte((sbyte)HandshakeResult.UNKNOWN_GUID_ACCEPTED);
                 }
 
 

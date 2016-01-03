@@ -1,5 +1,6 @@
 ﻿using NLog;
 using Piksel.Nemesis.Security;
+using Piksel.Nemesis.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -61,8 +62,9 @@ namespace Piksel.Nemesis
 
             try
             {
-                var response = stream.ReadByte();
-                idResponse = (response == -1 ? HandshakeResult.NODE_ERROR_CLOSED : (HandshakeResult)response);
+                bool couldRead;
+                var sb = stream.ReadSbyte(out couldRead);
+                idResponse = couldRead ? (HandshakeResult)sb : HandshakeResult.NODE_ERROR_CLOSED;
 
             }
             catch (Exception x)

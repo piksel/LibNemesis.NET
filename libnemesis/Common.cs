@@ -1,5 +1,6 @@
 ﻿using NLog;
 using Piksel.Nemesis.Security;
+using Piksel.Nemesis.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -211,17 +212,17 @@ namespace Piksel.Nemesis
         public ConcurrentQueue<QueuedCommand> CommandQueue { get; set; }
     }
 
-    public enum HandshakeResult: byte
+    public enum HandshakeResult: sbyte
     {
         // Accepted results:
         ACCEPTED = 0x00,
 
-        UNKNOWN_GUID_ACCEPTED = 0x02,
+        UNKNOWN_GUID_ACCEPTED = -0x12,
 
 
 
         // Non-accepted results:
-        MIN_ERROR = 0x30, // Do not use! Only for success comparission
+        MIN_ERROR = 0x01, // Do not use! Only for success comparission
 
         BAD_GUID = 0x41, // GUID is not in a valid format
         BLOCKED_GUID = 0x42, // GUID is blacklisted
@@ -231,9 +232,9 @@ namespace Piksel.Nemesis
         POOL_FULL = 0x51, // Client cannot accept more connections
 
         // Node-side results:
-        NODE_UNKNOWN = 0xa0,
-        NODE_ERROR_READ = 0xa1,
-        NODE_ERROR_CLOSED = 0xa2,
+        NODE_UNKNOWN = 0x60,
+        NODE_ERROR_READ = 0x61,
+        NODE_ERROR_CLOSED = 0x62,
 
     }
 
