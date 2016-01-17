@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libnemesis", "libnemesis\li
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NemesisTest", "NemesisTest\NemesisTest.csproj", "{64B0CA30-C5A0-46C4-9936-8758C13C6025}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libnemesis.tests", "libnemesis.tests\libnemesis.tests.csproj", "{48F1B5C1-7076-44C1-B902-80649869DEDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{64B0CA30-C5A0-46C4-9936-8758C13C6025}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64B0CA30-C5A0-46C4-9936-8758C13C6025}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64B0CA30-C5A0-46C4-9936-8758C13C6025}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48F1B5C1-7076-44C1-B902-80649869DEDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48F1B5C1-7076-44C1-B902-80649869DEDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48F1B5C1-7076-44C1-B902-80649869DEDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48F1B5C1-7076-44C1-B902-80649869DEDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

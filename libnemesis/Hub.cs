@@ -36,12 +36,14 @@ namespace Piksel.Nemesis
         // Accept the connection even if we do not have the node public key
         public bool AllowUnknownGuid { get; set; } = false;
 
-        public NemesisHub(IPEndPoint sendEndpoint, IPEndPoint recieveEndpoint)
+        public NemesisHub(IPEndPoint sendEndpoint, IPEndPoint recieveEndpoint, int readTimeout = 30000, int writeTimeout = 30000)
         {
             _log = LogManager.GetLogger("NemesisHub");
 
             this.sendEndpoint = sendEndpoint;
             this.recieveEndpoint = recieveEndpoint;
+            WriteTimeout = writeTimeout;
+            ReadTimeout = readTimeout;
 
             _log.Info("Starting sending communication thread...");
 

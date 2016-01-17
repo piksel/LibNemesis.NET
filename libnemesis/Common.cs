@@ -42,6 +42,8 @@ namespace Piksel.Nemesis
 
         public event CommandRecievedEventHandler CommandRecieved;
 
+        public int ReadTimeout { get; set; }
+        public int WriteTimeout { get; set; }
 
         protected abstract byte[] encryptKey(byte[] key, Guid remoteId);
 
@@ -197,7 +199,7 @@ namespace Piksel.Nemesis
         public IKeyStore KeyStore { get; set; }
         public bool EncryptionEnabled { get { return KeyStore != null; } }
 
-        public void EnableEncryption(IKeyStore keyStore)
+        public virtual void EnableEncryption(IKeyStore keyStore)
         {
             KeyStore = keyStore;
             KeyStore.Load();

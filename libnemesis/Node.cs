@@ -35,7 +35,7 @@ namespace Piksel.Nemesis
 
         public bool PermitPublicKeyUpload { get; set; } = false;
 
-        public NemesisNode(Guid id, int[] ports, string host, bool connectOnStart = true)
+        public NemesisNode(Guid id, int[] ports, string host, bool connectOnStart = true, int readTimeout = 30000, int writeTimeout = 30000)
         {
             _log = LogManager.GetLogger("NemesisNode");
 
@@ -43,6 +43,8 @@ namespace Piksel.Nemesis
             recievePort = ports[0];
             this.host = host;
             this.id = id;
+            ReadTimeout = readTimeout;
+            WriteTimeout = writeTimeout;
 
             hostIp = Dns.GetHostEntry(host).AddressList[0];
 
@@ -132,6 +134,8 @@ namespace Piksel.Nemesis
                 }
 
                 var stream = client.GetStream();
+
+                stream.ReadTimeout = 30000;
 
                 var idBytes = id.ToByteArray();
                 stream.Write(idBytes, 0, idBytes.Length);
@@ -283,6 +287,12 @@ namespace Piksel.Nemesis
         {
             return RSA.EncryptData(key, HubPublicKey.Key);
 
+        }
+
+        public override void EnableEncryption(IKeyStore keyStore)
+        {
+            if (HubPublicKey == null) throw new Exception("Hub public key not set, cannot enable encryption!");
+            base.EnableEncryption(keyStore);
         }
 
         public RSAKey HubPublicKey { get; set; }
