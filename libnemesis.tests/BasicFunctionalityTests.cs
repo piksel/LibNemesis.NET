@@ -17,7 +17,7 @@ namespace libnemesis.tests
         {
             var answerTimeout = TimeSpan.FromSeconds(10);
 
-            var NodeMessageRecieved = new TaskCompletionSource<string>();
+            var NodeMessageReceived = new TaskCompletionSource<string>();
 
             var testData = Shared.GetTestSettings();
 
@@ -40,16 +40,16 @@ namespace libnemesis.tests
                 hub.NodesPublicKeys.AddOrUpdate(testData.NodeAId, nodeAkeyStore.PublicKey,
                     (a, b) => { return nodeAkeyStore.PublicKey; });
 
-                hub.CommandRecieved += (sender, e) =>
+                hub.CommandReceived += (sender, e) =>
                 {
-                    Trace.WriteLine("Hub command recieved: " + e.Command);
+                    Trace.WriteLine("Hub command received: " + e.Command);
 
                     e.ResultSource.SetResult("ok");
                 };
 
                 var nodeResponse = hub.SendCommand("h2n", testData.NodeAId);
 
-                NodeMessageRecieved.SetResult(nodeResponse.Result);
+                NodeMessageReceived.SetResult(nodeResponse.Result);
 
 
             });
@@ -60,9 +60,9 @@ namespace libnemesis.tests
             nodeA.HubPublicKey = hubKeystore.PublicKey;
             nodeA.EnableEncryption(nodeAkeyStore);
 
-            nodeA.CommandRecieved += (sender, e) =>
+            nodeA.CommandReceived += (sender, e) =>
             {
-                Trace.WriteLine("nodeA command recieved: " + e.Command);
+                Trace.WriteLine("nodeA command received: " + e.Command);
 
                 e.ResultSource.SetResult("ok");
             };
@@ -75,8 +75,8 @@ namespace libnemesis.tests
             var hubResult = hubResponse.IsCompleted ? hubResponse.Result : "timeout";
             Assert.AreEqual("ok", hubResult, "Hub -> Node command error");
 
-            NodeMessageRecieved.Task.Wait(answerTimeout);
-            var nodeResult = NodeMessageRecieved.Task.IsCompleted ? NodeMessageRecieved.Task.Result : "timeout";
+            NodeMessageReceived.Task.Wait(answerTimeout);
+            var nodeResult = NodeMessageReceived.Task.IsCompleted ? NodeMessageReceived.Task.Result : "timeout";
             Assert.AreEqual("ok", nodeResult, "Node -> Hub command error");
 
         }
