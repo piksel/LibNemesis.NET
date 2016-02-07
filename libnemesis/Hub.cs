@@ -18,16 +18,16 @@ namespace Piksel.Nemesis
     {
 
         private AutoResetEvent sendConnectionWaitHandle = new AutoResetEvent(false);
-        private AutoResetEvent recieveConnectionWaitHandle = new AutoResetEvent(false);
+        private AutoResetEvent receiveConnectionWaitHandle = new AutoResetEvent(false);
 
         IPEndPoint sendEndpoint;
-        IPEndPoint recieveEndpoint;
+        IPEndPoint receiveEndpoint;
 
         private TcpListener sendListener;
-        private TcpListener recieveListener;
+        private TcpListener receiveListener;
 
         private Thread sendListenerThread;
-        private Thread recieveListenerThread;
+        private Thread receiveListenerThread;
 
         private bool aborted = false;
 
@@ -36,12 +36,12 @@ namespace Piksel.Nemesis
         // Accept the connection even if we do not have the node public key
         public bool AllowUnknownGuid { get; set; } = false;
 
-        public NemesisHub(IPEndPoint sendEndpoint, IPEndPoint recieveEndpoint, int readTimeout = 30000, int writeTimeout = 30000)
+        public NemesisHub(IPEndPoint sendEndpoint, IPEndPoint receiveEndpoint, int readTimeout = 30000, int writeTimeout = 30000)
         {
             _log = LogManager.GetLogger("NemesisHub");
 
             this.sendEndpoint = sendEndpoint;
-            this.recieveEndpoint = recieveEndpoint;
+            this.receiveEndpoint = receiveEndpoint;
             WriteTimeout = writeTimeout;
             ReadTimeout = readTimeout;
 
@@ -62,22 +62,22 @@ namespace Piksel.Nemesis
 
             sendListenerThread.Start();
 
-            _log.Info("Starting recieving communication thread...");
+            _log.Info("Starting receiving communication thread...");
 
-            recieveListenerThread = new Thread(new ThreadStart(delegate
+            receiveListenerThread = new Thread(new ThreadStart(delegate
             {
-                recieveListener = new TcpListener(recieveEndpoint);
-                recieveListener.Start();
+                receiveListener = new TcpListener(receiveEndpoint);
+                receiveListener.Start();
 
                 while (Thread.CurrentThread.ThreadState != ThreadState.AbortRequested)
                 {
-                    IAsyncResult result = recieveListener.BeginAcceptTcpClient(HandleAsyncRecieveConnection, recieveListener);
-                    recieveConnectionWaitHandle.WaitOne(TimeSpan.FromSeconds(3));  // Wait until a client has begun handling an event
-                    recieveConnectionWaitHandle.Reset(); // Reset wait handle or the loop goes as fast as it can (after first request)
+                    IAsyncResult result = receiveListener.BeginAcceptTcpClient(HandleAsyncReceiveConnection, receiveListener);
+                    receiveConnectionWaitHandle.WaitOne(TimeSpan.FromSeconds(3));  // Wait until a client has begun handling an event
+                    receiveConnectionWaitHandle.Reset(); // Reset wait handle or the loop goes as fast as it can (after first request)
                 }
             }));
 
-            recieveListenerThread.Start();
+            receiveListenerThread.Start();
         }
 
         public async Task<string> SendCommand(string command, Guid nodeId)
@@ -173,11 +173,22 @@ namespace Piksel.Nemesis
                                 {
                                     handleRemoteCommand(stream, serverCommand);
                                 }
-                                catch (Exception x)
+                                catch (AggregateException ax)
                                 {
-                                    var ix = x.InnerException;
-                                    _log.Warn($"Communication error with node. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
-                                    commandQueue.Enqueue(serverCommand);
+                                    ax.Handle((x) =>
+                                    {
+                                        if (x is System.Security.Cryptography.CryptographicException)
+                                        {
+                                            _log.Warn($"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
+                                        }
+                                        else
+                                        {
+                                            var ix = x.InnerException;
+                                            _log.Warn($"Communication error with node. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                                            commandQueue.Enqueue(serverCommand);
+                                        }
+                                        return true;
+                                    });
                                 }
                                 stream.Close();
                             }
@@ -195,19 +206,19 @@ namespace Piksel.Nemesis
             }
         }
 
-        private void HandleAsyncRecieveConnection(IAsyncResult result)
+        private void HandleAsyncReceiveConnection(IAsyncResult result)
         {
             TcpListener listener = (TcpListener)result.AsyncState;
             TcpClient client = listener.EndAcceptTcpClient(result);
             NetworkStream stream;
             Guid nodeId;
-            recieveConnectionWaitHandle.Set(); //Inform the main thread this connection is now handled
+            receiveConnectionWaitHandle.Set(); //Inform the main thread this connection is now handled
 
             if (HandleHandshake(client, out stream, out nodeId))
             {
                 while (!aborted && client.Connected)
                 {
-                    if (stream.DataAvailable) // Recieving mode
+                    if (stream.DataAvailable) // Receiving mode
                     {
                         _log.Debug("Waiting for command...");
                         try
@@ -219,11 +230,21 @@ namespace Piksel.Nemesis
                                 throw task.Exception;
                             }
                         }
-                        catch (Exception x)
+                        catch (AggregateException ax)
                         {
-                            // Todo: Throw a more user-friendly exception upon crypto errors -NM 2016-01-03
-                            var ix = x.InnerException;
-                            _log.Warn($"Communication error with node. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                            ax.Handle((x) =>
+                            {
+                                if (x is System.Security.Cryptography.CryptographicException)
+                                {
+                                    _log.Warn($"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
+                                }
+                                else
+                                {
+                                    var ix = x.InnerException;
+                                    _log.Warn($"Communication error with node. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                                }
+                                return true;
+                            });
                         }
                         stream.Close();
                     }
@@ -257,8 +278,8 @@ namespace Piksel.Nemesis
             if (sendListenerThread != null)
                 sendListenerThread.Abort();
 
-            if (recieveListenerThread != null)
-                recieveListenerThread.Abort();
+            if (receiveListenerThread != null)
+                receiveListenerThread.Abort();
         }
 
         ~NemesisHub()

@@ -32,13 +32,19 @@ namespace NemesisTest
                 new IPEndPoint(testData.Host, testData.Ports[1])
             );
             hub.EnableEncryption(hubKeystore);
-            hub.CommandRecieved += Hub_CommandRecieved;
+            hub.CommandReceived += Hub_CommandReceived;
 
             var nodeAKeyStore = new MemoryKeyStore();
             nodeAKeyStore.Load(testData.NodeAKeys);
 
             hub.NodesPublicKeys.AddOrUpdate(testData.NodeAId, nodeAKeyStore.PublicKey,
                 (a, b) => { return nodeAKeyStore.PublicKey; });
+
+            var nodeBKeyStore = new MemoryKeyStore();
+            nodeBKeyStore.Load(testData.NodeBKeys);
+
+            hub.NodesPublicKeys.AddOrUpdate(testData.NodeBId, nodeBKeyStore.PublicKey,
+                (a, b) => { return nodeBKeyStore.PublicKey; });
 
             _log.Info("Waiting for connections to establish...");
 
@@ -57,7 +63,7 @@ namespace NemesisTest
 
         }
 
-        private static void Hub_CommandRecieved(object sender, Nemesis.CommandRecievedEventArgs e)
+        private static void Hub_CommandReceived(object sender, Nemesis.CommandReceivedEventArgs e)
         {
             e.ResultSource.SetResult(String.Format("Client Result from {0}", e.NodeId));
         }

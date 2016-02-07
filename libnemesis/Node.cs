@@ -17,7 +17,7 @@ namespace Piksel.Nemesis
     public class NemesisNode: NemesisBase
     {
         int sendPort;
-        int recievePort;
+        int receivePort;
 
         Guid id;
 
@@ -29,7 +29,7 @@ namespace Piksel.Nemesis
         public TimeSpan RetryDelay = TimeSpan.FromSeconds(10);
 
         private Thread sendThread;
-        private Thread recieveThread;
+        private Thread receiveThread;
 
         ConcurrentQueue<QueuedCommand> commandQueue = new ConcurrentQueue<QueuedCommand>();
 
@@ -40,7 +40,7 @@ namespace Piksel.Nemesis
             _log = LogManager.GetLogger("NemesisNode");
 
             sendPort = ports[1];
-            recievePort = ports[0];
+            receivePort = ports[0];
             this.host = host;
             this.id = id;
             ReadTimeout = readTimeout;
@@ -49,11 +49,11 @@ namespace Piksel.Nemesis
             hostIp = Dns.GetHostEntry(host).AddressList[0];
 
             sendThread = new Thread(new ParameterizedThreadStart(sendThreadProcedure));
-            recieveThread = new Thread(new ParameterizedThreadStart(recieveThreadProcedure));
+            receiveThread = new Thread(new ParameterizedThreadStart(receiveThreadProcedure));
             if (connectOnStart)
             {
                 sendThread.Start(new IPEndPoint(hostIp, sendPort));
-                recieveThread.Start(new IPEndPoint(hostIp, recievePort));
+                receiveThread.Start(new IPEndPoint(hostIp, receivePort));
             }
         }
 
@@ -154,6 +154,11 @@ namespace Piksel.Nemesis
                                 {
                                     handleRemoteCommand(stream, serverCommand);
                                 }
+                                catch (System.Security.Cryptography.CryptographicException cx)
+                                {
+                                    _log.Warn($"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
+                                    serverCommand.ResultSource.SetException(cx);
+                                }
                                 catch (Exception x)
                                 {
                                     var ix = x.InnerException;
@@ -183,7 +188,7 @@ namespace Piksel.Nemesis
             
         }
 
-        private void recieveThreadProcedure(object remoteEndPoint_)
+        private void receiveThreadProcedure(object remoteEndPoint_)
         {
 
             var remoteEndPoint = (IPEndPoint)remoteEndPoint_;
@@ -221,12 +226,17 @@ namespace Piksel.Nemesis
 
                     while (!aborted && client.Connected)
                     {
-                        if (stream.DataAvailable) // Recieving mode
+                        if (stream.DataAvailable) // Receiving mode
                         {
                             _log.Info("Waiting for command...");
                             try
                             {
                                 handleLocalCommand(stream, Guid.Empty).Wait();
+                            }
+                            catch (System.Security.Cryptography.CryptographicException cx)
+                            {
+                                _log.Warn($"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
+
                             }
                             catch (Exception x)
                             {
@@ -257,14 +267,14 @@ namespace Piksel.Nemesis
             if (!sendThread.IsAlive)
                 sendThread.Start(new IPEndPoint(hostIp, sendPort));
 
-            if (!recieveThread.IsAlive)
-                recieveThread.Start(new IPEndPoint(hostIp, recievePort));
+            if (!receiveThread.IsAlive)
+                receiveThread.Start(new IPEndPoint(hostIp, receivePort));
         }
 
         public void Close()
         {
             sendThread.Abort();
-            recieveThread.Abort();
+            receiveThread.Abort();
         }
 
         ~NemesisNode()

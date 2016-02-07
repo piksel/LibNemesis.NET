@@ -24,16 +24,17 @@ namespace NemesisTest
 
 
             var nodeA = new Nemesis.NemesisNode(testData.NodeAId, testData.Ports, testData.Host.ToString(), false);
-            nodeA.EnableEncryption(keyStore);
+
             nodeA.SetLogName("nNodeA");
 
-
-            nodeA.CommandRecieved += NodeA_CommandRecieved;
+            nodeA.CommandReceived += NodeA_CommandReceived;
             
             var hubKeyStore = new MemoryKeyStore();
             hubKeyStore.Load(testData.HubKeys);
             nodeA.HubPublicKey = hubKeyStore.PublicKey;
-            
+
+            nodeA.EnableEncryption(keyStore);
+
             nodeA.Connect();
 
    
@@ -53,7 +54,7 @@ namespace NemesisTest
 
         }
 
-        private static void NodeA_CommandRecieved(object sender, Piksel.Nemesis.CommandRecievedEventArgs e)
+        private static void NodeA_CommandReceived(object sender, Piksel.Nemesis.CommandReceivedEventArgs e)
         {
             e.ResultSource.SetResult("Node A Result");
         }

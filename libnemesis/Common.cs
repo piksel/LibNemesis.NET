@@ -20,14 +20,14 @@ namespace Piksel.Nemesis
         public Guid NodeId { get; set; }
     }
 
-    public class CommandRecievedEventArgs: EventArgs
+    public class CommandReceivedEventArgs: EventArgs
     {
         public string Command;
         public TaskCompletionSource<string> ResultSource { get; set; }
         public Guid NodeId { get; set; }
     }
 
-    public delegate void CommandRecievedEventHandler(object sender, CommandRecievedEventArgs e);
+    public delegate void CommandReceivedEventHandler(object sender, CommandReceivedEventArgs e);
 
     public abstract class NemesisBase
     {
@@ -40,7 +40,7 @@ namespace Piksel.Nemesis
             _log = LogManager.GetLogger(name);
         }
 
-        public event CommandRecievedEventHandler CommandRecieved;
+        public event CommandReceivedEventHandler CommandReceived;
 
         public int ReadTimeout { get; set; }
         public int WriteTimeout { get; set; }
@@ -145,14 +145,14 @@ namespace Piksel.Nemesis
 
             _log.Debug($"Got command \"{command.Truncate(10)}\".");
 
-            var crea = new CommandRecievedEventArgs()
+            var crea = new CommandReceivedEventArgs()
             {
                 Command = command,
                 NodeId = remoteId,
                 ResultSource = new TaskCompletionSource<string>()
             };
 
-            CommandRecieved(this, crea);
+            CommandReceived(this, crea);
 
             var response = await crea.ResultSource.Task;
 

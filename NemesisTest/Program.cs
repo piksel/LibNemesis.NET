@@ -45,10 +45,11 @@ namespace NemesisTest
             var threadHub = new Thread(new ParameterizedThreadStart(threadProcHub));
             threadHub.Start(testData);
 
+            /*
             _log.Info("Starting Node A thread...");
             var threadNodeA = new Thread(new ParameterizedThreadStart(threadProcNodeA));
             threadNodeA.Start(testData);
-
+            */
             _log.Info("Starting Node B thread...");
             var threadNodeB = new Thread(new ParameterizedThreadStart(threadProcNodeB));
             threadNodeB.Start(testData);
@@ -95,7 +96,7 @@ namespace NemesisTest
             Console.Read();
 
             threadHub.Abort();
-            threadNodeA.Abort();
+            //threadNodeA.Abort();
             threadNodeB.Abort();
 
             _log.Info("Waiting for threads to exit...");
