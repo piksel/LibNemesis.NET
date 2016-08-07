@@ -46,7 +46,7 @@ namespace Piksel.Nemesis
             ReadTimeout = readTimeout;
             WriteTimeout = writeTimeout;
 
-            hostIp = Dns.GetHostEntry(host).AddressList[0];
+            hostIp = Dns.GetHostEntry(host).AddressList[0].MapToIPv4();
 
             sendThread = new Thread(new ParameterizedThreadStart(sendThreadProcedure));
             receiveThread = new Thread(new ParameterizedThreadStart(receiveThreadProcedure));
@@ -118,16 +118,16 @@ namespace Piksel.Nemesis
                 _log.Info("Connecting to hub...");
                 try
                 {
-                    var localEndpoint = new IPEndPoint(IPAddress.Any, 0);
+                    //var localEndpoint = new IPEndPoint(IPAddress.Any, 0);
 
-                    client = new TcpClient(localEndpoint);
+                    client = new TcpClient();
                     client.Connect(remoteEndPoint);
                     var lep = (IPEndPoint)client.Client.LocalEndPoint;
                     _log.Debug($"Local endpoint: {lep.Address}:{lep.Port}");
                 }
                 catch (Exception x)
                 {
-                    _log.Warn("Could not connect to the hub: {0}", x.Message);
+                    _log.Warn(x, "Could not connect to the hub: {0}", x.Message);
                     _log.Info("Waiting {0} seconds before trying again...", RetryDelay.TotalSeconds);
                     Thread.Sleep(RetryDelay);
                     continue;
@@ -156,13 +156,13 @@ namespace Piksel.Nemesis
                                 }
                                 catch (System.Security.Cryptography.CryptographicException cx)
                                 {
-                                    _log.Warn($"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
+                                    _log.Warn(cx, $"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
                                     serverCommand.ResultSource.SetException(cx);
                                 }
                                 catch (Exception x)
                                 {
                                     var ix = x.InnerException;
-                                    _log.Warn($"Communication error with hub. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                                    _log.Warn(x, $"Communication error with hub. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                                     commandQueue.Enqueue(serverCommand);
                                 }
                             }
@@ -201,16 +201,16 @@ namespace Piksel.Nemesis
                 _log.Info("Connecting to hub...");
                 try
                 {
-                    var localEndpoint = new IPEndPoint(IPAddress.Any, 0);
+                    //var localEndpoint = new IPEndPoint(IPAddress.Any, 0);
 
-                    client = new TcpClient(localEndpoint);
+                    client = new TcpClient();
                     client.Connect(remoteEndPoint);
                     var lep = (IPEndPoint)client.Client.LocalEndPoint;
                     _log.Debug($"Local endpoint: {lep.Address}:{lep.Port}");
                 }
                 catch (Exception x)
                 {
-                    _log.Warn("Could not connect to the hub: {0}", x.Message);
+                    _log.Warn(x, "Could not connect to the hub: {0}", x.Message);
                     _log.Info("Waiting {0} seconds before trying again...", RetryDelay.TotalSeconds);
                     Thread.Sleep(RetryDelay);
                     continue;
@@ -235,13 +235,13 @@ namespace Piksel.Nemesis
                             }
                             catch (System.Security.Cryptography.CryptographicException cx)
                             {
-                                _log.Warn($"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
+                                _log.Warn(cx, $"Cryptographic communication error with hub. Check encryption keys. Details: {cx.Message}");
 
                             }
                             catch (Exception x)
                             {
                                 var ix = x.InnerException;
-                                _log.Warn($"Communication error with hub. Details: {x.Message}{(ix!=null?"; "+ix.Message:"")}");
+                                _log.Warn(x, $"Communication error with hub. Details: {x.Message}{(ix!=null?"; "+ix.Message:"")}");
                             }
                         }
                         

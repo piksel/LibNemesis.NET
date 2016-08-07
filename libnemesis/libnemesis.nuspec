@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
-<package >
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <id>$id$</id>
-    <version>$version$</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <id>libnemesis</id>
+    <version>3.4.16038.200</version>
+    <title>libnemesis</title>
+    <authors>piksel bitworks</authors>
+    <owners>piksel bitworks</owners>
     <licenseUrl>https://raw.githubusercontent.com/piksel/LibNemesis.NET/master/LICENSE.txt</licenseUrl>
     <projectUrl>https://github.com/piksel/LibNemesis.NET</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
-    <releaseNotes></releaseNotes>
-    <copyright>Copyright 2015</copyright>
-    <tags></tags>
+    <description>Nemesis Library for .NET</description>
+    <releaseNotes />
+    <copyright>Copyright 2016</copyright>
+    <dependencies>
+      <dependency id="NLog" version="4.1.2" />
+    </dependencies>
   </metadata>
 </package>

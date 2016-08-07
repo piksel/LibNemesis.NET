@@ -179,12 +179,12 @@ namespace Piksel.Nemesis
                                     {
                                         if (x is System.Security.Cryptography.CryptographicException)
                                         {
-                                            _log.Warn($"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
+                                            _log.Warn(x, $"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
                                         }
                                         else
                                         {
                                             var ix = x.InnerException;
-                                            _log.Warn($"Communication error with node. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                                            _log.Warn(x, $"Communication error with node. Requeueing command. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                                             commandQueue.Enqueue(serverCommand);
                                         }
                                         return true;
@@ -236,12 +236,12 @@ namespace Piksel.Nemesis
                             {
                                 if (x is System.Security.Cryptography.CryptographicException)
                                 {
-                                    _log.Warn($"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
+                                    _log.Warn(x, $"Cryptographic communication error with node. Check encryption keys.  Details: {x.Message}");
                                 }
                                 else
                                 {
                                     var ix = x.InnerException;
-                                    _log.Warn($"Communication error with node. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
+                                    _log.Warn(x, $"Communication error with node. Details: {x.Message}{(ix != null ? "; " + ix.Message : "")}");
                                 }
                                 return true;
                             });
