@@ -71,7 +71,7 @@ namespace Piksel.Nemesis
             }
             catch (Exception x)
             {
-                _log.Error("Cannot get response from client: {0}", x.Message);
+                _log.Error(x, $"Cannot get response from hub: {x.Message}");
                 idResponse = HandshakeResult.NODE_ERROR_READ;
             }
 
@@ -81,19 +81,22 @@ namespace Piksel.Nemesis
 
                 if (idResponse == HandshakeResult.UNKNOWN_GUID_ACCEPTED)
                 {
+                    /*
                     if (PermitPublicKeyUpload)
                     {
                         var uploadKeyCommand = new QueuedCommand()
                         {
-                            CommandString = "__PUBKEY:" + KeyEncryption.GetPublicKey(KeyStore.PublicKey.Key),
+                            CommandString = "__PUBKEY:" + KeyEncryption.GetPublicKey(KeyStore?.PublicKey?.Key),
                         };
                         commandQueue.Enqueue(uploadKeyCommand);
+                        
                     }
                     else
                     {
                         // Todo: Handle if the Hub wants the public key but the Node is configured not to send it.
                         return false;
                     }
+                    */
                 }
 
                 return true;

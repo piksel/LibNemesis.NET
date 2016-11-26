@@ -19,9 +19,10 @@ namespace NemesisTest
 
             _log.Info("Creating node C...");
 
-            var nodeC = new Nemesis.NemesisNode(testData.NodeAId, testData.Ports, testData.Host.ToString(), false);
+            var nodeC = new Nemesis.NemesisNode(testData.NodeCId, testData.Ports, "localhost", false);
 
             nodeC.SetLogName("nNodeC");
+            nodeC.PermitPublicKeyUpload = true;
 
             nodeC.CommandReceived += NodeC_CommandReceived;
 

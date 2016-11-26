@@ -130,7 +130,7 @@ namespace NemesisTest
         public byte[] NodeBKeys { get { return _nodeBKeys; } }
 
         readonly Guid _nodeCId;
-        public Guid NodeCId { get { return _nodeBId; } }
+        public Guid NodeCId { get { return _nodeCId; } }
 
         readonly byte[] _hubKeys;
         public byte[] HubKeys { get { return _hubKeys; } }

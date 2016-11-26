@@ -36,6 +36,7 @@ namespace NemesisTest
             _log.Info("Enable encryption for nodes A and B...");
 
             //hub.EnableEncryption(hubKeystore);
+            hub.AllowUnknownGuid = true;
 
             var nodeAKeyStore = new MemoryKeyStore(RSA.Default);
             nodeAKeyStore.Load(testData.NodeAKeys);

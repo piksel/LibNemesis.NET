@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>libnemesis</id>
-    <version>4.0.16330.219</version>
+    <version>4.0.16331.224</version>
     <title>libnemesis</title>
     <authors>piksel bitworks</authors>
     <owners>piksel bitworks</owners>
