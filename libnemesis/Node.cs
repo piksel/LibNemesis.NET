@@ -46,7 +46,7 @@ namespace Piksel.Nemesis
             ReadTimeout = readTimeout;
             WriteTimeout = writeTimeout;
 
-            hostIp = Dns.GetHostEntry(host).AddressList[0].MapToIPv4();
+            hostIp = Dns.GetHostEntry(host).AddressList.First(ip => ip.AddressFamily == AddressFamily.InterNetwork);
 
             sendThread = new Thread(new ParameterizedThreadStart(sendThreadProcedure));
             receiveThread = new Thread(new ParameterizedThreadStart(receiveThreadProcedure));
