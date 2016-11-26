@@ -40,21 +40,24 @@ namespace Piksel.Nemesis.Security
 
         public bool Initialized { get { return PublicKey.Key != null && PublicKey.Key.Length > 0; } }
 
-        public MemoryKeyStore()
+        private IKeyEncryption keyEncryption;
+
+        public MemoryKeyStore(IKeyEncryption keyEncryption)
         {
             PrivateKey = new RSAKey();
             PublicKey = new RSAKey();
+            this.keyEncryption = keyEncryption;
         }
 
         public void Load()
         {
             if(!Initialized)
-                RSA.CreateNewKeyPair(this);
+                keyEncryption.CreateNewKeyPair(this);
         }
 
         public void Load(byte[] cspBytes)
         {
-            RSA.ImportFromBytes(this, cspBytes);
+            keyEncryption.ImportFromBytes(this, cspBytes);
         }
 
         public void Save()
@@ -83,13 +86,15 @@ namespace Piksel.Nemesis.Security
         public string FileName { get; set; }
 
         public bool CreateIfNotExist;
+        private IKeyEncryption keyEncryption;
 
-        public XMLFileKeyStore(string filename, bool createIfNotExist = false)
+        public XMLFileKeyStore(string filename, IKeyEncryption keyEncryption, bool createIfNotExist = false)
         {
             PrivateKey = new RSAKey();
             PublicKey = new RSAKey();
             FileName = filename;
             CreateIfNotExist = createIfNotExist;
+            this.keyEncryption = keyEncryption;
 
             Load();
         }
@@ -109,12 +114,12 @@ namespace Piksel.Nemesis.Security
             {
                 using (var sr = File.OpenText(FileName))
                 {
-                    RSA.ImportFromXml(this, sr.ReadToEnd());
+                    keyEncryption.ImportFromXml(this, sr.ReadToEnd());
                 }
             }
             else if(CreateIfNotExist)
             {
-                RSA.CreateNewKeyPair(this);
+                keyEncryption.CreateNewKeyPair(this);
             }
         }
 
@@ -122,7 +127,7 @@ namespace Piksel.Nemesis.Security
         {
             using(var sw = File.CreateText(FileName))
             {
-                sw.Write(RSA.ExportToXml(PrivateKey.Key, true));
+                sw.Write(keyEncryption.ExportToXml(PrivateKey.Key, true));
             }
         }
     }

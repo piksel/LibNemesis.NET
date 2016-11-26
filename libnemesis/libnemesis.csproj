@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
-    <AssemblyVersion>3.3.16038.195</AssemblyVersion>
+    <AssemblyVersion>4.0.16330.218</AssemblyVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -50,7 +50,12 @@
     <Compile Include="Common.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Security\EncryptedMessage.cs" />
+    <Compile Include="Security\IKeyEncryption.cs" />
+    <Compile Include="Security\IMessageEncryption.cs" />
+    <Compile Include="Security\KeyEncryptionBase.cs" />
     <Compile Include="Security\KeyStore.cs" />
+    <Compile Include="Security\NoKey.cs" />
+    <Compile Include="Security\PlainText.cs" />
     <Compile Include="Security\Rijndael.cs" />
     <Compile Include="Security\RSA.cs" />
     <Compile Include="Node.cs" />

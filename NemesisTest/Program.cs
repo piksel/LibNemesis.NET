@@ -24,18 +24,23 @@ namespace NemesisTest
             Console.Title = "Nemesis Test";
             _log.Info("Nemesis test started.");
 
-            _log.Info("Generating GUIDs for server A and B...");
+            _log.Info("Generating GUIDs for nodes A, B and C...");
             var nodeAId = Guid.NewGuid();
-            _log.Info($"Using GUID for server A: {nodeAId.ToString()}");
+            _log.Info($"Using GUID for node A: {nodeAId.ToString()}");
             var nodeBId = Guid.NewGuid();
-            _log.Info($"Using GUID for server B: {nodeBId.ToString()}");
+            _log.Info($"Using GUID for node B: {nodeBId.ToString()}");
+            var nodeCId = Guid.NewGuid();
+            _log.Info($"Using GUID for node C: {nodeCId.ToString()}");
+
+            var kp = RSA.Default.CreateNewKeyPair();
 
             var testData = new TestData(
                 nodeAId,
-                RSA.CreateNewKeyPair(),
+                kp,
                 nodeBId,
-                RSA.CreateNewKeyPair(),
-                RSA.CreateNewKeyPair(),
+                kp,
+                nodeCId,
+                kp,
                 PORTS,
                 IPAddress.Loopback
             );
@@ -49,11 +54,14 @@ namespace NemesisTest
             _log.Info("Starting Node A thread...");
             var threadNodeA = new Thread(new ParameterizedThreadStart(threadProcNodeA));
             threadNodeA.Start(testData);
-            */
+            
             _log.Info("Starting Node B thread...");
             var threadNodeB = new Thread(new ParameterizedThreadStart(threadProcNodeB));
             threadNodeB.Start(testData);
-
+            */
+            _log.Info("Starting Node C thread...");
+            var threadNodeC = new Thread(new ParameterizedThreadStart(threadProcNodeC));
+            threadNodeC.Start(testData);
 
 
 
@@ -97,7 +105,8 @@ namespace NemesisTest
 
             threadHub.Abort();
             //threadNodeA.Abort();
-            threadNodeB.Abort();
+            //threadNodeB.Abort();
+            threadNodeC.Abort();
 
             _log.Info("Waiting for threads to exit...");
             
@@ -120,6 +129,9 @@ namespace NemesisTest
         readonly byte[] _nodeBKeys;
         public byte[] NodeBKeys { get { return _nodeBKeys; } }
 
+        readonly Guid _nodeCId;
+        public Guid NodeCId { get { return _nodeBId; } }
+
         readonly byte[] _hubKeys;
         public byte[] HubKeys { get { return _hubKeys; } }
 
@@ -131,7 +143,7 @@ namespace NemesisTest
         public ManualResetEvent[] ResetEvents;
 
         public TestData(Guid nodeAId, byte[] nodeAKeys, Guid nodeBId,
-            byte[] nodeBKeys, byte[] hubKeys, int[] ports, IPAddress host)
+            byte[] nodeBKeys, Guid nodeCId, byte[] hubKeys, int[] ports, IPAddress host)
         {
             ResetEvents = new ManualResetEvent[3] {
                 new ManualResetEvent(false),
@@ -143,6 +155,7 @@ namespace NemesisTest
             _nodeAKeys = nodeAKeys;
             _nodeBId = nodeBId;
             _nodeBKeys = nodeBKeys;
+            _nodeCId = nodeCId;
             _hubKeys = hubKeys;
             _ports = ports;
             _host = host;

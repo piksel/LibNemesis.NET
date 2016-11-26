@@ -20,7 +20,7 @@ namespace NemesisTest
             var testData = (TestData)testData_;
 
             _log.Info("Creating keystore for Hub...");
-            var hubKeystore = new MemoryKeyStore();
+            var hubKeystore = new MemoryKeyStore(RSA.Default);
             hubKeystore.Load(testData.HubKeys);
 
             _log.Info("Waiting for node A to fail the connection...");
@@ -31,16 +31,19 @@ namespace NemesisTest
                 new IPEndPoint(testData.Host, testData.Ports[0]),
                 new IPEndPoint(testData.Host, testData.Ports[1])
             );
-            hub.EnableEncryption(hubKeystore);
             hub.CommandReceived += Hub_CommandReceived;
 
-            var nodeAKeyStore = new MemoryKeyStore();
+            _log.Info("Enable encryption for nodes A and B...");
+
+            //hub.EnableEncryption(hubKeystore);
+
+            var nodeAKeyStore = new MemoryKeyStore(RSA.Default);
             nodeAKeyStore.Load(testData.NodeAKeys);
 
             hub.NodesPublicKeys.AddOrUpdate(testData.NodeAId, nodeAKeyStore.PublicKey,
                 (a, b) => { return nodeAKeyStore.PublicKey; });
 
-            var nodeBKeyStore = new MemoryKeyStore();
+            var nodeBKeyStore = new MemoryKeyStore(RSA.Default);
             nodeBKeyStore.Load(testData.NodeBKeys);
 
             hub.NodesPublicKeys.AddOrUpdate(testData.NodeBId, nodeBKeyStore.PublicKey,

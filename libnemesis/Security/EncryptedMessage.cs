@@ -13,19 +13,23 @@ namespace Piksel.Nemesis.Security
         public byte[] Key { get; set; }
         public byte[] IV { get; set; }
         public MessageEncryptionType EncryptionType { get; set; }
+        public KeyEncryptionType KeyType { get; set; }
 
-        private static readonly int _headerSize = 4;
-        private static readonly int _ivSize = 16;
+        private static readonly int _headerSize = 6;
 
         public void WriteToStream(Stream stream)
         {
 
             byte encryptionType = (byte)EncryptionType;
+            byte keyType = (byte)KeyType;
             byte keySize = PoSizeFromByteLength(Key.Length);
+            byte ivSize = (byte)IV.Length;
             byte[] dataSize = BitConverter.GetBytes( (ushort)CipherBytes.Length );
 
             stream.WriteByte(encryptionType);
+            stream.WriteByte(keyType);
             stream.WriteByte(keySize);
+            stream.WriteByte(ivSize);
             stream.Write(dataSize, 0, dataSize.Length);
 
             stream.Write(IV, 0, IV.Length);
@@ -40,14 +44,16 @@ namespace Piksel.Nemesis.Security
             stream.Read(header, 0, _headerSize);
 
             MessageEncryptionType encryptionType = (MessageEncryptionType)header[0];
+            KeyEncryptionType keyType = (KeyEncryptionType)header[1];
 
-            int keySize = ByteLengthFromPoSize(header[1]);
+            int keySize = ByteLengthFromPoSize(header[2]);
+            int ivSize = header[3];
 
             // read dataSize from header using a offset of 2
-            ushort dataSize = BitConverter.ToUInt16(header, 2);
+            ushort dataSize = BitConverter.ToUInt16(header, 4);
 
-            byte[] iv = new byte[_ivSize];
-            stream.Read(iv, 0, _ivSize);
+            byte[] iv = new byte[ivSize];
+            stream.Read(iv, 0, ivSize);
 
             byte[] key = new byte[keySize];
             stream.Read(key, 0, keySize);
@@ -58,6 +64,8 @@ namespace Piksel.Nemesis.Security
             em.IV = iv;
             em.Key = key;
             em.CipherBytes = data;
+            em.KeyType = keyType;
+            em.EncryptionType = encryptionType;
 
             return em;
         }
@@ -76,12 +84,14 @@ namespace Piksel.Nemesis.Security
     public enum MessageEncryptionType : byte
     {
         Unknown = 0xFF,
-            Aes = 0x01
+            Aes = 0x01,
+           None = 0x0
     }
 
     public enum KeyEncryptionType : byte
     {
         Unknown = 0xFF,
-            Rsa = 0x01
+            Rsa = 0x01,
+           None = 0x0
     }
 }

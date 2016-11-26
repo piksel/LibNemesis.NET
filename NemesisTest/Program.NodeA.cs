@@ -19,7 +19,7 @@ namespace NemesisTest
 
             _log.Info("Creating node A...");
 
-            var keyStore = new MemoryKeyStore();
+            var keyStore = new MemoryKeyStore(RSA.Default);
             keyStore.Load(testData.NodeAKeys);
 
 
@@ -29,7 +29,7 @@ namespace NemesisTest
 
             nodeA.CommandReceived += NodeA_CommandReceived;
             
-            var hubKeyStore = new MemoryKeyStore();
+            var hubKeyStore = new MemoryKeyStore(RSA.Default);
             hubKeyStore.Load(testData.HubKeys);
             nodeA.HubPublicKey = hubKeyStore.PublicKey;
 

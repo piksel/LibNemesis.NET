@@ -85,7 +85,7 @@ namespace Piksel.Nemesis
                     {
                         var uploadKeyCommand = new QueuedCommand()
                         {
-                            CommandString = "__PUBKEY:" + RSA.GetPublicKey(KeyStore.PublicKey.Key),
+                            CommandString = "__PUBKEY:" + KeyEncryption.GetPublicKey(KeyStore.PublicKey.Key),
                         };
                         commandQueue.Enqueue(uploadKeyCommand);
                     }
@@ -293,10 +293,12 @@ namespace Piksel.Nemesis
             return commandQueue;
         }
 
-        protected override byte[] encryptKey(byte[] key, Guid remoteId)
+        protected override void encryptKey(ref EncryptedMessage em, Guid remoteId)
         {
-            return RSA.EncryptData(key, HubPublicKey.Key);
+            if (KeyEncryption is NoKey) return;
 
+            em.Key = KeyEncryption.EncryptData(em.Key, HubPublicKey?.Key);
+            em.KeyType = KeyEncryption.Type;
         }
 
         public override void EnableEncryption(IKeyStore keyStore)

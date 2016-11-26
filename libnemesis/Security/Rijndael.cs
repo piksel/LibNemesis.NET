@@ -8,9 +8,20 @@ using System.Threading.Tasks;
 
 namespace Piksel.Nemesis.Security
 {
-    public class Rijndael
+    public class Rijndael: IMessageEncryption
     {
-        public static EncryptedMessage Encrypt(byte[] input)
+        private static Rijndael _default;
+        public static Rijndael Default
+        {
+            get
+            {
+                if (_default == null)
+                    _default = new Rijndael();
+                return _default;
+            }
+        }
+
+        public EncryptedMessage Encrypt(byte[] input)
         {
             var em = new EncryptedMessage();
             using (var aes = new AesManaged())
@@ -41,7 +52,7 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        public static byte[] Decrypt(EncryptedMessage em)
+        public byte[] Decrypt(EncryptedMessage em)
         {
             using (var aes = new AesManaged())
             {

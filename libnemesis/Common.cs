@@ -45,7 +45,7 @@ namespace Piksel.Nemesis
         public int ReadTimeout { get; set; }
         public int WriteTimeout { get; set; }
 
-        protected abstract byte[] encryptKey(byte[] key, Guid remoteId);
+        protected abstract void encryptKey(ref EncryptedMessage em, Guid remoteId);
 
         protected EncryptedMessage encryptMessage(QueuedCommand qc)
         {
@@ -54,61 +54,65 @@ namespace Piksel.Nemesis
 
         protected EncryptedMessage encryptMessage(string message, Guid remoteId)
         {
-            // encrypt message with Rijndael
-            var em = Rijndael.Encrypt(Encoding.UTF8.GetBytes(message));
+            // encrypt message 
+            var em = MessageEncryption.Encrypt(Encoding.UTF8.GetBytes(message));
 
-            // encrypt key with RSA
-            em.Key = encryptKey(em.Key, remoteId);
+            // encrypt key 
+            encryptKey(ref em, remoteId);
 
             return em;
         }
 
-
         protected string decryptMessage(EncryptedMessage em)
         {
-            em.Key = RSA.DecryptData(em.Key, KeyStore.PrivateKey.Key);
+            var me = getMessageEncryption(em);
+            var ke = getKeyEncryption(em);
+            em.Key = ke.DecryptData(em.Key, KeyStore?.PrivateKey?.Key);
 
-            var bytes = Rijndael.Decrypt(em);
+            var bytes = me.Decrypt(em);
 
             return Encoding.UTF8.GetString(bytes);
         }
 
+        private IKeyEncryption getKeyEncryption(EncryptedMessage em)
+        {
+            switch (em.KeyType)
+            {
+                case KeyEncryptionType.Rsa:
+                    return RSA.Default;
+                default:
+                case KeyEncryptionType.None:
+                    return NoKey.Default;
+            }
+        }
+
+        private IMessageEncryption getMessageEncryption(EncryptedMessage em)
+        {
+            switch(em.EncryptionType)
+            {
+                case MessageEncryptionType.Aes:
+                    return Rijndael.Default;
+                default:
+                case MessageEncryptionType.None:
+                    return PlainText.Default;
+            }
+        }
+
         protected void handleRemoteCommand(NetworkStream stream, QueuedCommand serverCommand)
         {
-            if (EncryptionEnabled)
-            {
-                var em = encryptMessage(serverCommand);
-                em.WriteToStream(stream);
-            }
-            else
-            {
-                using (var sw = new StreamWriter(stream, encoding: new UTF8Encoding(false, false), bufferSize: 32, leaveOpen: true))
-                {
-                    sw.Write(serverCommand.CommandString);
-                }
-                stream.WriteByte(0);
-            }
+            var emc = encryptMessage(serverCommand);
+            emc.WriteToStream(stream);
 
             string response;
 
-            if (EncryptionEnabled)
+            using (MemoryStream ms = new MemoryStream())
             {
+                stream.CopyTo(ms);
+                ms.Position = 0;
+                var emr = EncryptedMessage.FromStream(ms);
+                response = decryptMessage(emr);
+            }
 
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    stream.CopyTo(ms);
-                    ms.Position = 0;
-                    var em = EncryptedMessage.FromStream(ms);
-                    response = decryptMessage(em);
-                }
-            }
-            else
-            {
-                using (var sr = new StreamReader(stream))
-                {
-                    response = sr.ReadToEnd();
-                }
-            }
             serverCommand.ResultSource.SetResult(response);
             stream.Close();
         }
@@ -117,31 +121,9 @@ namespace Piksel.Nemesis
         {
 
             string command;
-            byte[] cmdBuf;
 
-            if (EncryptionEnabled)
-            {
-                var em = EncryptedMessage.FromStream(stream);
-                command = decryptMessage(em);
-            }
-            else
-            {
-                cmdBuf = new byte[2048];
-                int cp = 0;
-                for (; cp < cmdBuf.Length; ++cp)
-                {
-                    var ib = stream.ReadByte();
-                    if (ib > 0)
-                    {
-                        cmdBuf[cp] = (byte)ib;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                command = Encoding.UTF8.GetString(cmdBuf, 0, cmdBuf.Length);
-            }
+            var emc = EncryptedMessage.FromStream(stream);
+            command = decryptMessage(emc);
 
             _log.Debug($"Got command \"{command.Truncate(10)}\".");
 
@@ -156,25 +138,16 @@ namespace Piksel.Nemesis
 
             var response = await crea.ResultSource.Task;
 
-            if (EncryptionEnabled)
-            {
-                try {
-                    var em = encryptMessage(response, remoteId);
-                    em.WriteToStream(stream);
-                }
-                catch (Exception x)
-                {
-                    _log.Warn($"Could not send response: {x.Message}");
-                    throw x;
-                }
+            try {
+                var emr = encryptMessage(response, remoteId);
+                emr.WriteToStream(stream);
             }
-            else
+            catch (Exception x)
             {
-                using (var sw = new StreamWriter(stream))
-                {
-                    sw.Write(response);
-                }
+                _log.Warn($"Could not send response: {x.Message}");
+                throw x;
             }
+
             stream.Close();
         }
 
@@ -203,7 +176,14 @@ namespace Piksel.Nemesis
         {
             KeyStore = keyStore;
             KeyStore.Load();
+
+            // TODO: Fix hard coded encryption -NM 2016-11-24
+            KeyEncryption = new RSA();
+            MessageEncryption = new Rijndael();
         }
+
+        protected IMessageEncryption MessageEncryption { get; set; } = new PlainText();
+        protected IKeyEncryption KeyEncryption { get; set; } = new NoKey();
 
     }
 

@@ -7,10 +7,26 @@ using System.Threading.Tasks;
 
 namespace Piksel.Nemesis.Security
 {
-    public static class RSA
+    public class RSA : KeyEncryptionBase
     {
 
-        public static void CreateNewKeyPair(IKeyStore keyStore, int keySize = 1024)
+        public override KeyEncryptionType Type
+        {
+            get { return KeyEncryptionType.Rsa; }
+        }
+
+        private static RSA _default;
+        public static RSA Default
+        {
+            get
+            {
+                if (_default == null)
+                    _default = new RSA();
+                return _default;
+            }
+        }
+
+        public override void CreateNewKeyPair(IKeyStore keyStore, int keySize = 1024)
         {
 
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
@@ -23,7 +39,7 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        public static byte[] CreateNewKeyPair(int keySize = 1024)
+        public override byte[] CreateNewKeyPair(int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
@@ -32,7 +48,7 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        public static string ExportToXml(byte[] key, bool includePrivate = true, int keySize = 1024)
+        public override string ExportToXml(byte[] key, bool includePrivate = true, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
@@ -42,7 +58,7 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        public static void ImportFromXml(IKeyStore keyStore, string xml, int keySize = 1024)
+        public override void ImportFromXml(IKeyStore keyStore, string xml, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
@@ -54,7 +70,7 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        public static void ImportFromBytes(IKeyStore keyStore, byte[] bytes, int keySize = 1024)
+        public override void ImportFromBytes(IKeyStore keyStore, byte[] bytes, int keySize = 1024)
         {
             
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
@@ -70,7 +86,7 @@ namespace Piksel.Nemesis.Security
 
         }
 
-        public static byte[] GetPublicKey(byte[] privateKey, int keySize = 1024)
+        public override byte[] GetPublicKey(byte[] privateKey, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
@@ -80,13 +96,9 @@ namespace Piksel.Nemesis.Security
             }
         }
 
-        // plain -> public key -> encrypted bytes
-        public static byte[] EncryptData(string data, byte[] key)
-        {
-            return EncryptData(Encoding.UTF8.GetBytes(data), key);
-        }
 
-        public static byte[] EncryptData(byte[] data, byte[] key, int keySize = 1024)
+
+        public override byte[] EncryptData(byte[] data, byte[] key, int keySize = 1024)
         {
             byte[] cipherbytes;
 
@@ -94,26 +106,29 @@ namespace Piksel.Nemesis.Security
             {
                 rsa.PersistKeyInCsp = false;
                 rsa.ImportCspBlob(key);
-                cipherbytes = rsa.Encrypt(data, false);
+                cipherbytes = rsa.Encrypt(data, true);
             }
 
             return cipherbytes;
         }
 
         // encrypted bytes -> private key -> plain
-        public static byte[] DecryptData(byte[] data, byte[] key, int keySize = 1024)
+        public override byte[] DecryptData(byte[] data, byte[] key, int keySize = 1024)
         {
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(keySize))
             {
-                rsa.PersistKeyInCsp = false;
-                rsa.ImportCspBlob(key);
-                return rsa.Decrypt(data, false);
+                try
+                {
+                    rsa.PersistKeyInCsp = false;
+                    rsa.ImportCspBlob(key);
+                    return rsa.Decrypt(data, true);
+                }
+                catch (Exception x)
+                {
+                    var a = x;
+                    return new byte[0];
+                }
             }
-        }
-
-        public static string DecryptDataString(byte[] data, byte[] key)
-        {
-            return Encoding.UTF8.GetString(DecryptData(data, key));
         }
 
     }

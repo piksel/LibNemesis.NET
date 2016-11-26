@@ -18,10 +18,12 @@ namespace NemesisTest
 
             _log.Info("Creating node B...");
 
-            var badKeyStore = new MemoryKeyStore();
+            var ke = new RSA();
+
+            var badKeyStore = new MemoryKeyStore(ke);
             badKeyStore.Load(testData.NodeAKeys); // Note: The WRONG keystore
 
-            var nodeBKeyStore = new MemoryKeyStore();
+            var nodeBKeyStore = new MemoryKeyStore(ke);
             nodeBKeyStore.Load(testData.NodeAKeys);
 
             var nodeB = new Nemesis.NemesisNode(testData.NodeBId, testData.Ports, testData.Host.ToString(), false);

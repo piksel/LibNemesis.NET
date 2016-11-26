@@ -289,12 +289,15 @@ namespace Piksel.Nemesis
 
         public ConcurrentDictionary<Guid, RSAKey> NodesPublicKeys = new ConcurrentDictionary<Guid, RSAKey>();
 
-        protected override byte[] encryptKey(byte[] key, Guid remoteId)
+        protected override void encryptKey(ref EncryptedMessage em, Guid remoteId)
         {
+            if (KeyEncryption is NoKey) return;
+
             if (!NodesPublicKeys.ContainsKey(remoteId))
                 throw new Exception(String.Format("No RSA public key for node \"{0}\" found!", remoteId.ToString()));
 
-            return RSA.EncryptData(key, NodesPublicKeys[remoteId].Key);
+            em.Key = KeyEncryption.EncryptData(em.Key, NodesPublicKeys[remoteId].Key);
+            em.KeyType = KeyEncryption.Type;
 
         }
     }
